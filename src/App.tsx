@@ -1,25 +1,54 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
-
+/** @jsxImportSource @emotion/react */
+import { css } from '@emotion/react';
+import { lazy, Suspense } from 'react';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+// import AskPage from './AskPage';
+import Header from './Header';
+import HomePage from './HomePage';
+import NotFoundPage from './NotFoundPage';
+import QuestionPage from './QuestionPage';
+import SearchPage from './SearchPage';
+import SignInPage from './SignInPage';
+import { fontFamily, fontSize, gray2 } from './Styles';
+const AskPage = lazy(() => import('./AskPage'));
+const cssStyles = css`
+  font-family: ${fontFamily};
+  font-size: ${fontSize};
+  color: ${gray2};
+`;
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <BrowserRouter>
+      <div css={cssStyles}>
+        <Header />
+        <Routes>
+          <Route path="" element={<HomePage />} />
+          <Route path="search" element={<SearchPage />} />
+          <Route path="signIn" element={<SignInPage />} />
+          <Route
+            path="ask"
+            element={
+              <Suspense
+                fallback={
+                  <div
+                    css={css`
+                      margin-top: 100px;
+                      text-align: center;
+                    `}
+                  >
+                    Loading...
+                  </div>
+                }
+              >
+                <AskPage />
+              </Suspense>
+            }
+          />
+          <Route path="question/:questionId" element={<QuestionPage />} />
+          <Route path="*" element={<NotFoundPage />} />
+        </Routes>
+      </div>
+    </BrowserRouter>
   );
 }
 
