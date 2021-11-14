@@ -71,3 +71,47 @@ export const searchQuestions = async (searchTerm: string): Promise<QuestionData[
       q.content.toLowerCase().indexOf(searchTerm.toLowerCase()) >= 0,
   );
 };
+
+interface ICreateQuestionDataDto {
+  title: string;
+  content: string;
+  username: string;
+  createdAt: Date;
+}
+
+export const createQuestion = async (
+  questionDto: ICreateQuestionDataDto,
+): Promise<QuestionData | null> => {
+  await wait(500);
+
+  const newQuestionId = Math.max(...questions.map((q) => q.questionId)) + 1;
+  const newQuestion: QuestionData = {
+    ...questionDto,
+    questionId: newQuestionId,
+    answers: [],
+  };
+
+  questions.push(newQuestion);
+  return newQuestion;
+};
+
+interface ICreateAnswerDataDto {
+  questionId: number;
+  content: string;
+  username: string;
+  createdAt: Date;
+}
+
+export const createAnswer = async (answerDto: ICreateAnswerDataDto): Promise<AnswerData | null> => {
+  await wait(500);
+  const question = questions.filter((q) => q.questionId === answerDto.questionId)[0];
+  if (!question) return null;
+
+  const newAnswer: AnswerData = {
+    ...answerDto,
+    answerId: 99,
+  };
+  question.answers.push(newAnswer);
+
+  return newAnswer;
+};

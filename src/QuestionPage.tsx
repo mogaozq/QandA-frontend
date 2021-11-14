@@ -1,15 +1,39 @@
 /** @jsxImportSource @emotion/react */
 import { css } from '@emotion/react';
-import { Fragment, useEffect, useState } from 'react';
+import { FormEvent, Fragment, useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
 import { useParams } from 'react-router';
 import AnswerList from './AnswerList';
 import Page from './Page';
-import { getQuestion, QuestionData } from './QuestionsData';
-import { gray3, gray6 } from './Styles';
+import { createAnswer, getQuestion, QuestionData } from './QuestionsData';
+import {
+  FieldContainer,
+  FieldError,
+  FieldLabel,
+  Fieldset,
+  FieldTextArea,
+  FormButtonContainer,
+  gray3,
+  gray6,
+  PrimaryButton,
+  SubmissionSuccess,
+} from './Styles';
+
+interface IAnswerFormData {
+  content: string;
+}
 
 function QuestionPage() {
   const { questionId } = useParams();
   const [question, setQuestion] = useState<QuestionData | null>(null);
+  const [successfullyCreated, setSuccessfullyCreated] = useState(false);
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<IAnswerFormData>({
+    mode: 'onBlur',
+  });
 
   useEffect(() => {
     async function doGetQuestion(id: number) {
@@ -18,6 +42,17 @@ function QuestionPage() {
     }
     if (questionId) doGetQuestion(Number(questionId));
   }, [questionId]);
+
+  const submitAnswer = (data: IAnswerFormData) => {
+    const result = createAnswer({
+      content: data.content,
+      questionId: question!.questionId,
+      createdAt: new Date(),
+      username: 'Moga',
+    });
+    setSuccessfullyCreated(Boolean(result));
+  };
+
   return (
     <Page>
       <div
@@ -60,6 +95,34 @@ function QuestionPage() {
               } on ${question.createdAt.toLocaleDateString()} ${question.createdAt.toLocaleTimeString()}`}
             </div>
             <AnswerList data={question.answers} />
+            <form
+              css={css`
+                margin-top: 20px;
+              `}
+              onSubmit={handleSubmit(submitAnswer)}
+            >
+              <Fieldset disabled={isSubmitting || successfullyCreated}>
+                <FieldContainer>
+                  <FieldLabel htmlFor="content">Your Answer</FieldLabel>
+                  <FieldTextArea
+                    id="content"
+                    {...register('content', { required: true, minLength: 30 })}
+                  />
+                  {errors.content?.type === 'required' && (
+                    <FieldError>You must enter the question content</FieldError>
+                  )}
+                  {errors.content?.type === 'minLength' && (
+                    <FieldError>The content must be at least 30 characters</FieldError>
+                  )}
+                </FieldContainer>
+                <FormButtonContainer>
+                  <PrimaryButton type="submit">Submit your answer</PrimaryButton>
+                </FormButtonContainer>
+                {successfullyCreated && (
+                  <SubmissionSuccess>Your answer was successfuly submitted</SubmissionSuccess>
+                )}
+              </Fieldset>
+            </form>
           </Fragment>
         )}
       </div>

@@ -1,10 +1,11 @@
 /** @jsxImportSource @emotion/react */
+import { useNavigate } from 'react-router-dom';
 
-import React from 'react';
 import { UserIcon } from './Icons';
 import { css } from '@emotion/react';
 import { fontFamily, fontSize, gray1, gray2, gray5 } from './Styles';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
 
 const containerStyles = css`
   box-sizing: border-box;
@@ -42,10 +43,18 @@ const searchInputStyles = css`
     outline-color: ${gray5};
   }
 `;
+interface ISearchFromData {
+  search: string;
+}
 
 export default function Header() {
-  const handelSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    console.log(e.currentTarget.value);
+  console.log('Header rerendered');
+  const [searchParams] = useSearchParams();
+  const { register, handleSubmit } = useForm<ISearchFromData>();
+  const navigate = useNavigate();
+
+  const submit = ({ search }: ISearchFromData) => {
+    navigate(`search?criteria=${search}`);
   };
 
   return (
@@ -53,7 +62,14 @@ export default function Header() {
       <Link css={titleStyles} to="">
         Q and A
       </Link>
-      <input css={searchInputStyles} placeholder="search" onChange={handelSearchInputChange} />
+      <form onSubmit={handleSubmit(submit)}>
+        <input
+          css={searchInputStyles}
+          placeholder="search"
+          defaultValue={searchParams.get('criteria') || ''}
+          {...register('search', { required: true })}
+        />
+      </form>
       <Link
         css={css`
           font-family: ${fontFamily};
