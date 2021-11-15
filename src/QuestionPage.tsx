@@ -1,11 +1,14 @@
 /** @jsxImportSource @emotion/react */
 import { css } from '@emotion/react';
-import { FormEvent, Fragment, useEffect, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { useDispatch, useSelector } from 'react-redux';
 import { useParams } from 'react-router';
 import AnswerList from './AnswerList';
+import { AppState } from './Store';
 import Page from './Page';
-import { createAnswer, getQuestion, QuestionData } from './QuestionsData';
+import { createAnswer, getQuestion } from './QuestionsData';
+import { gettingQuestionAction, gotQuestionAction } from './Store/questions/QuestionActions';
 import {
   FieldContainer,
   FieldError,
@@ -25,8 +28,9 @@ interface IAnswerFormData {
 
 function QuestionPage() {
   const { questionId } = useParams();
-  const [question, setQuestion] = useState<QuestionData | null>(null);
   const [successfullyCreated, setSuccessfullyCreated] = useState(false);
+  const question = useSelector((state: AppState) => state.questions.viewing);
+  const dispatch = useDispatch();
   const {
     register,
     handleSubmit,
@@ -37,10 +41,12 @@ function QuestionPage() {
 
   useEffect(() => {
     async function doGetQuestion(id: number) {
+      dispatch(gettingQuestionAction());
       const question = await getQuestion(id);
-      setQuestion(question);
+      dispatch(gotQuestionAction(question));
     }
     if (questionId) doGetQuestion(Number(questionId));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [questionId]);
 
   const submitAnswer = (data: IAnswerFormData) => {

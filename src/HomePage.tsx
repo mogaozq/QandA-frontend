@@ -1,12 +1,18 @@
 /** @jsxImportSource @emotion/react */
 import { css } from '@emotion/react';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import Page from './Page';
 import PageTitle from './PageTitle';
-import { getUnAnsweredQuestions, QuestionData } from './QuestionsData';
+import { getUnAnsweredQuestions } from './QuestionsData';
 import QuestionList from './QuestionsList';
 import { PrimaryButton } from './Styles';
+import { AppState } from './Store';
+import {
+  gettingUnansweredQuestionsAction,
+  gotUnansweredQuestionsAction,
+} from './Store/questions/QuestionActions';
 
 const titleContainerStyles = css`
   display: flex;
@@ -15,17 +21,19 @@ const titleContainerStyles = css`
 `;
 
 function HomePage() {
-  const [questions, setQuestions] = useState<QuestionData[]>([]);
-  const [loadingData, setLoadingData] = useState(true);
+  const questions = useSelector((state: AppState) => state.questions.unAnswered);
+  const loadingData = useSelector((state: AppState) => state.questions.isLoading);
+  const dispatch = useDispatch();
   const navigate = useNavigate();
 
   useEffect(() => {
     async function doGetUnAsnweredQuestions() {
+      dispatch(gettingUnansweredQuestionsAction());
       const questions = await getUnAnsweredQuestions();
-      setQuestions(questions);
-      setLoadingData(false);
+      dispatch(gotUnansweredQuestionsAction(questions));
     }
     doGetUnAsnweredQuestions();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleAskQuestionClick = () => {
