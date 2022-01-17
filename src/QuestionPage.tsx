@@ -21,12 +21,14 @@ import {
   PrimaryButton,
   SubmissionSuccess,
 } from './Styles';
+import { useAuth } from './Auth';
 
 interface IAnswerFormData {
   content: string;
 }
 
 function QuestionPage() {
+  const { isAuthenticated } = useAuth();
   const { questionId } = useParams();
   const [successfullyCreated, setSuccessfullyCreated] = useState(false);
   const question = useSelector((state: AppState) => state.questions.viewing);
@@ -53,8 +55,6 @@ function QuestionPage() {
     const result = createAnswer({
       content: data.content,
       questionId: question!.questionId,
-      createdAt: new Date(),
-      username: 'Moga',
     });
     setSuccessfullyCreated(Boolean(result));
   };
@@ -97,38 +97,40 @@ function QuestionPage() {
               `}
             >
               {`Asked by ${
-                question.username
+                question.userName
               } on ${question.createdAt.toLocaleDateString()} ${question.createdAt.toLocaleTimeString()}`}
             </div>
             <AnswerList data={question.answers} />
-            <form
-              css={css`
-                margin-top: 20px;
-              `}
-              onSubmit={handleSubmit(submitAnswer)}
-            >
-              <Fieldset disabled={isSubmitting || successfullyCreated}>
-                <FieldContainer>
-                  <FieldLabel htmlFor="content">Your Answer</FieldLabel>
-                  <FieldTextArea
-                    id="content"
-                    {...register('content', { required: true, minLength: 30 })}
-                  />
-                  {errors.content?.type === 'required' && (
-                    <FieldError>You must enter the question content</FieldError>
+            {isAuthenticated && (
+              <form
+                css={css`
+                  margin-top: 20px;
+                `}
+                onSubmit={handleSubmit(submitAnswer)}
+              >
+                <Fieldset disabled={isSubmitting || successfullyCreated}>
+                  <FieldContainer>
+                    <FieldLabel htmlFor="content">Your Answer</FieldLabel>
+                    <FieldTextArea
+                      id="content"
+                      {...register('content', { required: true, minLength: 30 })}
+                    />
+                    {errors.content?.type === 'required' && (
+                      <FieldError>You must enter the question content</FieldError>
+                    )}
+                    {errors.content?.type === 'minLength' && (
+                      <FieldError>The content must be at least 30 characters</FieldError>
+                    )}
+                  </FieldContainer>
+                  <FormButtonContainer>
+                    <PrimaryButton type="submit">Submit your answer</PrimaryButton>
+                  </FormButtonContainer>
+                  {successfullyCreated && (
+                    <SubmissionSuccess>Your answer was successfuly submitted</SubmissionSuccess>
                   )}
-                  {errors.content?.type === 'minLength' && (
-                    <FieldError>The content must be at least 30 characters</FieldError>
-                  )}
-                </FieldContainer>
-                <FormButtonContainer>
-                  <PrimaryButton type="submit">Submit your answer</PrimaryButton>
-                </FormButtonContainer>
-                {successfullyCreated && (
-                  <SubmissionSuccess>Your answer was successfuly submitted</SubmissionSuccess>
-                )}
-              </Fieldset>
-            </form>
+                </Fieldset>
+              </form>
+            )}
           </Fragment>
         )}
       </div>

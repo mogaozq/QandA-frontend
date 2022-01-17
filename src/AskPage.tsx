@@ -33,8 +33,6 @@ function AskPage() {
     const result = await createQuestion({
       content: data.content,
       title: data.title,
-      username: 'Moga',
-      createdAt: new Date(),
     });
     setSuccessfullyCreated(Boolean(result));
   };

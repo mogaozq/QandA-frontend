@@ -20,7 +20,7 @@ export const Question = ({ data, showContent = true }: Props) => (
         text-decoration: none;
         color: ${gray2};
       `}
-      to={`question/${data.questionId}`}
+      to={`/question/${data.questionId}`}
     >
       <div
         css={css`
@@ -50,7 +50,7 @@ export const Question = ({ data, showContent = true }: Props) => (
         color: ${gray3};
       `}
     >
-      {`Asked by ${data.username} on
+      {`Asked by ${data.userName} on
         ${data.createdAt.toLocaleDateString()} ${data.createdAt.toLocaleTimeString()}`}
     </div>
   </div>

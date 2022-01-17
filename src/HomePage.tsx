@@ -13,6 +13,7 @@ import {
   gettingUnansweredQuestionsAction,
   gotUnansweredQuestionsAction,
 } from './Store/questions/QuestionActions';
+import { useAuth } from './Auth';
 
 const titleContainerStyles = css`
   display: flex;
@@ -21,6 +22,7 @@ const titleContainerStyles = css`
 `;
 
 function HomePage() {
+  const { isAuthenticated } = useAuth();
   const questions = useSelector((state: AppState) => state.questions.unAnswered);
   const loadingData = useSelector((state: AppState) => state.questions.isLoading);
   const dispatch = useDispatch();
@@ -45,7 +47,9 @@ function HomePage() {
     <Page>
       <div css={titleContainerStyles}>
         <PageTitle>Unanswered Questions</PageTitle>
-        <PrimaryButton onClick={handleAskQuestionClick}>Ask a question</PrimaryButton>
+        {isAuthenticated && (
+          <PrimaryButton onClick={handleAskQuestionClick}>Ask a question</PrimaryButton>
+        )}
       </div>
       {loadingData ? <div>Loading...</div> : <QuestionList data={questions} />}
     </Page>

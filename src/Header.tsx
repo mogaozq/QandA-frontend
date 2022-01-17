@@ -6,6 +6,7 @@ import { css } from '@emotion/react';
 import { fontFamily, fontSize, gray1, gray2, gray5 } from './Styles';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
+import { useAuth } from './Auth';
 
 const containerStyles = css`
   box-sizing: border-box;
@@ -43,12 +44,30 @@ const searchInputStyles = css`
     outline-color: ${gray5};
   }
 `;
+
+const buttonStyle = css`
+  font-family: ${fontFamily};
+  font-size: ${fontSize};
+  padding: 5px 10px;
+  background-color: transparent;
+  color: ${gray2};
+  text-decoration: none;
+  cursor: pointer;
+  :focus {
+    outline-color: ${gray5};
+  }
+  span {
+    margin-left: 7px;
+  }
+`;
+
 interface ISearchFromData {
   search: string;
 }
 
 export default function Header() {
   console.log('Header rerendered');
+  const { isAuthenticated, user, loading } = useAuth();
   const [searchParams] = useSearchParams();
   const { register, handleSubmit } = useForm<ISearchFromData>();
   const navigate = useNavigate();
@@ -70,27 +89,24 @@ export default function Header() {
           {...register('search', { required: true })}
         />
       </form>
-      <Link
-        css={css`
-          font-family: ${fontFamily};
-          font-size: ${fontSize};
-          padding: 5px 10px;
-          background-color: transparent;
-          color: ${gray2};
-          text-decoration: none;
-          cursor: pointer;
-          :focus {
-            outline-color: ${gray5};
-          }
-          span {
-            margin-left: 7px;
-          }
-        `}
-        to="signin"
-      >
-        <UserIcon />
-        <span>Sign In</span>
-      </Link>
+      <div>
+        {loading && <div>Loading...</div>}
+        {!loading &&
+          (isAuthenticated ? (
+            <div>
+              <span>{user!.name}</span>
+              <Link css={buttonStyle} to="signout">
+                <UserIcon />
+                <span>Sign Out</span>
+              </Link>
+            </div>
+          ) : (
+            <Link css={buttonStyle} to="signin">
+              <UserIcon />
+              <span>Sign In</span>
+            </Link>
+          ))}
+      </div>
     </div>
   );
 }

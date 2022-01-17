@@ -1,10 +1,38 @@
+import { getAccessToken } from './Auth';
+import { http } from './http';
+
 export interface QuestionData {
   questionId: number;
   title: string;
   content: string;
-  username: string;
+  userName: string;
   createdAt: Date;
   answers: AnswerData[];
+}
+
+export interface QuestionDataFromServer {
+  questionId: number;
+  title: string;
+  content: string;
+  userName: string;
+  createdAt: string;
+  answers: AnswerDataFromServer[];
+}
+
+export function mapToQuestionData(questionDataFromServer: QuestionDataFromServer): QuestionData {
+  const question: QuestionData = {
+    ...questionDataFromServer,
+    createdAt: new Date(questionDataFromServer.createdAt),
+    answers: questionDataFromServer.answers?.map(mapToAnswerData) || [],
+  };
+  return question;
+}
+
+export function mapToAnswerData(answerDataFromServer: AnswerDataFromServer): AnswerData {
+  return {
+    ...answerDataFromServer,
+    createdAt: new Date(answerDataFromServer.createdAt),
+  };
 }
 
 export interface AnswerData {
@@ -14,104 +42,65 @@ export interface AnswerData {
   createdAt: Date;
 }
 
-const questions: QuestionData[] = [
-  {
-    questionId: 1,
-    title: 'Why should I learn TypeScript?',
-    content:
-      'TypeScript seems to be getting popular so I wondered whether it is worth my time learning it? What benefits does it give over JavaScript?',
-    username: 'Bob',
-    createdAt: new Date(),
-    answers: [
-      {
-        answerId: 1,
-        content: 'To catch problems earlier speeding up your developments',
-        username: 'Jane',
-        createdAt: new Date(),
-      },
-      {
-        answerId: 2,
-        content: 'So, that you can use the JavaScript features of tomorrow, today',
-        username: 'Fred',
-        createdAt: new Date(),
-      },
-    ],
-  },
-  {
-    questionId: 2,
-    title: 'Which state management tool should I use?',
-    content:
-      'There seem to be a fair few state management tools around for React - React, Unstated, ... Which one should I use?',
-    username: 'Bob',
-    createdAt: new Date(),
-    answers: [],
-  },
-];
-
-const wait = (ms: number): Promise<void> => {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-};
+export interface AnswerDataFromServer {
+  answerId: number;
+  content: string;
+  username: string;
+  createdAt: string;
+}
 
 export const getUnAnsweredQuestions = async (): Promise<QuestionData[]> => {
-  await wait(500);
-  return questions.filter((q) => q.answers.length === 0);
+  const response = await http<QuestionDataFromServer[]>({ path: 'Questions/unanswered' });
+  if (response.ok && response.body) return response.body.map(mapToQuestionData);
+  else return [];
 };
 
 export const getQuestion = async (id: number): Promise<QuestionData | null> => {
-  await wait(500);
-  const results = questions.filter((q) => q.questionId === id);
-  return results.length === 0 ? null : results[0];
+  const response = await http<QuestionDataFromServer>({ path: 'questions/' + id });
+  if (response.ok && response.body) return mapToQuestionData(response.body);
+  return null;
 };
 
 export const searchQuestions = async (searchTerm: string): Promise<QuestionData[]> => {
-  await wait(500);
-  return questions.filter(
-    (q) =>
-      q.title.toLowerCase().indexOf(searchTerm.toLowerCase()) >= 0 ||
-      q.content.toLowerCase().indexOf(searchTerm.toLowerCase()) >= 0,
-  );
+  const response = await http<QuestionDataFromServer[]>({ path: `questions?search=${searchTerm}` });
+  if (response.ok && response.body) return response.body.map(mapToQuestionData);
+  else return [];
 };
 
 interface ICreateQuestionDataDto {
   title: string;
   content: string;
-  username: string;
-  createdAt: Date;
 }
 
 export const createQuestion = async (
   questionDto: ICreateQuestionDataDto,
 ): Promise<QuestionData | null> => {
-  await wait(500);
+  var accessToken = await getAccessToken();
+  var response = await http<QuestionDataFromServer, ICreateQuestionDataDto>({
+    path: 'questions',
+    method: 'post',
+    body: questionDto,
+    accessToken,
+  });
 
-  const newQuestionId = Math.max(...questions.map((q) => q.questionId)) + 1;
-  const newQuestion: QuestionData = {
-    ...questionDto,
-    questionId: newQuestionId,
-    answers: [],
-  };
-
-  questions.push(newQuestion);
-  return newQuestion;
+  if (response.ok && response.body) return mapToQuestionData(response.body);
+  return null;
 };
 
 interface ICreateAnswerDataDto {
   questionId: number;
   content: string;
-  username: string;
-  createdAt: Date;
 }
 
 export const createAnswer = async (answerDto: ICreateAnswerDataDto): Promise<AnswerData | null> => {
-  await wait(500);
-  const question = questions.filter((q) => q.questionId === answerDto.questionId)[0];
-  if (!question) return null;
+  const accessToken = await getAccessToken();
+  const response = await http<AnswerDataFromServer, ICreateAnswerDataDto>({
+    path: `questions/${answerDto.questionId}/answers`,
+    method: 'post',
+    body: answerDto,
+    accessToken,
+  });
 
-  const newAnswer: AnswerData = {
-    ...answerDto,
-    answerId: 99,
-  };
-  question.answers.push(newAnswer);
-
-  return newAnswer;
+  if (response.ok && response.body) return mapToAnswerData(response.body);
+  else return null;
 };
